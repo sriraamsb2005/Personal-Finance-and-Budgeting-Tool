@@ -1,0 +1,150 @@
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="row">
+            <% 
+            const income = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const expenses = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+            %>
+            <div class="col-md-6">
+                <div class="summary-card income">
+                    <h4>Total Income</h4>
+                    <h2>$<%= income.toFixed(2) %></h2>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="summary-card expense">
+                    <h4>Total Expenses</h4>
+                    <h2>$<%= expenses.toFixed(2) %></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card transaction-card">
+            <div class="card-body">
+                <h3 class="mb-4">Add Transaction</h3>
+                <form action="/add-transaction" method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required placeholder="Enter transaction title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" required placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Type</label>
+                        <select class="form-control" id="type" name="type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-control" id="category" name="category" required>
+                            <option value="salary">Salary</option>
+                            <option value="investment">Investment</option>
+                            <option value="food">Food</option>
+                            <option value="transport">Transport</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" placeholder="Add notes about this transaction"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus-circle me-2"></i>Add Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="mb-4">Recent Transactions</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% transactions.forEach(transaction => { %>
+                                <tr>
+                                    <td><%= new Date(transaction.date).toLocaleDateString() %></td>
+                                    <td><%= transaction.title %></td>
+                                    <td><span class="badge bg-info"><%= transaction.category %></span></td>
+                                    <td class="<%= transaction.type === 'income' ? 'income-amount' : 'expense-amount' %>">
+                                        <%= transaction.type === 'income' ? '+' : '-' %>$<%= transaction.amount.toFixed(2) %>
+                                    </td>
+                                    <td>
+                                        <span class="badge <%= transaction.type === 'income' ? 'bg-success' : 'bg-danger' %>">
+                                            <%= transaction.type %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-container">
+            <div class="card-body">
+                <h3 class="mb-4">Financial Overview</h3>
+                <canvas id="transactionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transactions = <%- JSON.stringify(transactions) %>;
+    
+    // Calculate totals
+    const income = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    const expenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    // Create chart
+    const ctx = document.getElementById('transactionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Income', 'Expenses'],
+            datasets: [{
+                data: [income, expenses],
+                backgroundColor: ['#28a745', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+});
+</script>
